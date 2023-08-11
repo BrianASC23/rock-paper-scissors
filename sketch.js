@@ -1,3 +1,14 @@
+// Classifier Variable
+let classifier;
+// Model URL
+let imageModelURL = 'https://teachablemachine.withgoogle.com/models/JY5j6XQol/';
+
+// Video
+let video;
+let flippedVideo;
+// To store the classification
+let label = "";
+
 // Possible states:
 // rock, paper, scissors, none
 let playerMove = "none";
@@ -9,24 +20,46 @@ let computerScore = 0;
 let state = "playing";
 let message = "Click to lock in selection";
 
+// Load the model first
+function preload() {
+    classifier = ml5.imageClassifier(imageModelURL + 'model.json');
+}
+
 function setup() {
-    createCanvas(640, 240);
+    createCanvas(320, 260);
+    // Create the video
+    video = createCapture(VIDEO);
+    video.size(320, 240);
+    video.hide();
+
+    flippedVideo = ml5.flipImage(video);
+    // Start classifying
+    classifyVideo();
 }
 
 function draw() {
     background(222);
+    // Draw the video
+    image(flippedVideo, 0, 0);
+
+    // Draw the label
+    fill(255);
+    textSize(16);
+    textAlign(CENTER);
+    text(label, width / 2, height - 4);
+  
 
     // only update move if currently playing
     if (state == "playing") {
-        // updates player move based on key press
-        if (keyIsDown(82)) {
-            // R key pressed
+        // updates player move based on gestures
+        if (label == "Rock") {
+            
             playerMove = "rock";
-        } else if (keyIsDown(80)) {
-            // P key pressed
+        } else if (label == "Paper") {
+            
             playerMove = "paper";
-        } else if (keyIsDown(83)) {
-            // S key pressed
+        } else if (label == "Scissor") {
+           
             playerMove = "scissors";
         }
     }
@@ -111,4 +144,26 @@ function getMoveEmoji(move) {
     } else {
         return "invalid move";
     }
+}
+
+// Get a prediction for the current video frame
+function classifyVideo() {
+    flippedVideo = ml5.flipImage(video)
+    classifier.classify(flippedVideo, gotResult);
+    flippedVideo.remove();
+
+}
+
+  // When we get a result
+function gotResult(error, results) {
+    // If there is an error
+    if (error) {
+      console.error(error);
+      return;
+    }
+    // The results are in an array ordered by confidence.
+    // console.log(results[0]);
+    label = results[0].label;
+    // Classifiy again!
+    classifyVideo();
 }
